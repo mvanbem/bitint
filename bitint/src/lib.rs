@@ -3,7 +3,7 @@
 #![cfg_attr(feature = "_nightly", feature(doc_cfg))]
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 
 use core::fmt::{self, Display, Formatter};
 use core::num::ParseIntError;
