@@ -109,10 +109,9 @@ macro_rules! define_ubitint_type {
                 type Primitive = $primitive;
 
                 const BITS: usize = $bits;
-                const MASK: $primitive = if $bits < $primitive::BITS {
-                    (1 << $bits) - 1
-                } else {
-                    $primitive::MAX
+                const MASK: $primitive = match (1 as $primitive).checked_shl($bits) {
+                    Some(x) => x.wrapping_sub(1),
+                    None => $primitive::MAX,
                 };
 
                 const MIN: Self = Self::new_masked(0);
