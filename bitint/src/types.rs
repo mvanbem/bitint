@@ -108,7 +108,7 @@ macro_rules! define_ubitint_type {
             impl UBitint for [<U $bits>] {
                 type Primitive = $primitive;
 
-                const BITS: usize = $bits;
+                const BITS: u32 = $bits;
                 const MASK: $primitive = match (1 as $primitive).checked_shl($bits) {
                     Some(x) => x.wrapping_sub(1),
                     None => $primitive::MAX,

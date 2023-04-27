@@ -32,7 +32,7 @@ pub trait UBitint:
     type Primitive: From<Self>;
 
     /// The bit width of this type.
-    const BITS: usize;
+    const BITS: u32;
     /// The bit mask for the bits that may be set in values of this type.
     const MASK: Self::Primitive;
 
