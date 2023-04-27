@@ -53,7 +53,7 @@ macro_rules! define_ubitint_type {
                 #[inline(always)]
                 #[must_use]
                 pub const fn new_masked(value: $primitive) -> Self {
-                    Self(value & Self::MASK )
+                    Self(value & Self::MASK)
                 }
 
                 /// Creates a `bitint` from a primitive value without checking
