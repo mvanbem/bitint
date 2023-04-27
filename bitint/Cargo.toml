@@ -13,7 +13,7 @@ _nightly = []
 
 [dependencies]
 bitint-macros = { path = "../bitint-macros" }
-num-traits = "0.2"
+num-traits = { version = "0.2", default-features = false }
 paste = "1"
 seq-macro = "0.3"
 
