@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "bitint",
+    "bitint-macros",
+    "bitint-test-checked",
+    "bitint-test-unchecked",
+]
+
+[profile.test-unchecked]
+inherits = "test"
+overflow-checks = false
