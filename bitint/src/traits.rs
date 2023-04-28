@@ -49,6 +49,7 @@ pub trait UBitint:
     /// Creates an unsigned `bitint` value from a primitive value if it is in
     /// range for this type, as determined by
     /// [`is_in_range`](Self::is_in_range).
+    #[must_use]
     fn new(value: Self::Primitive) -> Option<Self>;
 
     /// Creates an unsigned `bitint` value by masking off the upper bits of a
@@ -56,6 +57,7 @@ pub trait UBitint:
     ///
     /// This conversion is lossless if the value is in range for this type, as
     /// determined by [`is_in_range`](Self::is_in_range).
+    #[must_use]
     fn new_masked(value: Self::Primitive) -> Self;
 
     /// Creates an unsigned `bitint` value from a primitive value without
@@ -67,12 +69,14 @@ pub trait UBitint:
     ///
     /// The value must be in range for this type, as determined by
     /// [`is_in_range`](Self::is_in_range).
+    #[must_use]
     unsafe fn new_unchecked(value: Self::Primitive) -> Self;
 
     /// Converts the value to a primitive type.
     ///
     /// This is a zero-cost conversion. The result is in range for this type, as
     /// determined by [`is_in_range`](Self::is_in_range).
+    #[must_use]
     fn to_primitive(self) -> Self::Primitive;
 
     /// Checks whether a primitive value is in range for this type.
@@ -85,6 +89,7 @@ pub trait UBitint:
     ///   inclusive: `value >= Self::MIN.as_primitive() && value <=
     ///   Self::MAX.as_primitive()`
     ///
+    #[must_use]
     fn is_in_range(value: Self::Primitive) -> bool;
 }
 
@@ -93,6 +98,7 @@ pub trait PrimitiveSizedBitint: UBitint + From<Self::Primitive> {
     /// Creates a `bitint` value from a primitive value of the same width.
     ///
     /// This is a zero-cost conversion.
+    #[must_use]
     fn from_primitive(value: Self::Primitive) -> Self;
 }
 
@@ -100,6 +106,7 @@ pub trait PrimitiveSizedBitint: UBitint + From<Self::Primitive> {
 pub trait CheckedAdd<Rhs = Self>: num_traits::CheckedAdd {
     /// Checked integer addition. Computes `self + rhs`, returning `None` if
     /// overflow occurred.
+    #[must_use]
     fn checked_add(self, rhs: Rhs) -> Option<Self::Output>;
 }
 
@@ -107,6 +114,7 @@ pub trait CheckedAdd<Rhs = Self>: num_traits::CheckedAdd {
 pub trait CheckedDiv<Rhs = Self>: num_traits::CheckedDiv {
     /// Checked integer division. Computes `self / rhs`, returning `None` if
     /// overflow occurred.
+    #[must_use]
     fn checked_div(self, rhs: Rhs) -> Option<Self::Output>;
 }
 
@@ -114,6 +122,7 @@ pub trait CheckedDiv<Rhs = Self>: num_traits::CheckedDiv {
 pub trait CheckedMul<Rhs = Self>: num_traits::CheckedMul {
     /// Checked integer multiplication. Computes `self * rhs`, returning `None`
     /// if overflow occurred.
+    #[must_use]
     fn checked_mul(self, rhs: Rhs) -> Option<Self::Output>;
 }
 
@@ -121,6 +130,7 @@ pub trait CheckedMul<Rhs = Self>: num_traits::CheckedMul {
 pub trait CheckedRem<Rhs = Self>: num_traits::CheckedRem {
     /// Checked integer remainder. Computes `self % rhs`, returning `None` if
     /// overflow occurred.
+    #[must_use]
     fn checked_rem(self, rhs: Rhs) -> Option<Self::Output>;
 }
 
@@ -128,6 +138,7 @@ pub trait CheckedRem<Rhs = Self>: num_traits::CheckedRem {
 pub trait CheckedSub<Rhs = Self>: num_traits::CheckedSub {
     /// Checked integer subtraction. Computes `self - rhs`, returning `None` if
     /// overflow occurred.
+    #[must_use]
     fn checked_sub(self, rhs: Rhs) -> Option<Self::Output>;
 }
 
@@ -135,6 +146,7 @@ pub trait CheckedSub<Rhs = Self>: num_traits::CheckedSub {
 pub trait WrappingAdd<Rhs = Self>: num_traits::WrappingAdd {
     /// Wrapping (modular) integer addition. Computes `self + rhs`, wrapping
     /// around at the boundary of the type.
+    #[must_use]
     fn wrapping_add(self, rhs: Rhs) -> Self::Output;
 }
 
@@ -142,6 +154,7 @@ pub trait WrappingAdd<Rhs = Self>: num_traits::WrappingAdd {
 pub trait WrappingMul<Rhs = Self>: num_traits::WrappingMul {
     /// Wrapping (modular) integer multiplication. Computes `self * rhs`,
     /// wrapping around at the boundary of the type.
+    #[must_use]
     fn wrapping_mul(self, rhs: Rhs) -> Self::Output;
 }
 
@@ -149,6 +162,7 @@ pub trait WrappingMul<Rhs = Self>: num_traits::WrappingMul {
 pub trait WrappingSub<Rhs = Self>: num_traits::WrappingSub {
     /// Wrapping (modular) integer subtraction. Computes `self - rhs`, wrapping
     /// around at the boundary of the type.
+    #[must_use]
     fn wrapping_sub(self, rhs: Rhs) -> Self::Output;
 }
 
@@ -166,6 +180,7 @@ pub trait UncheckedAdd<Rhs = Self> {
     ///
     /// The result must be in range for this type. For unsigned `bitint`s, this
     /// is as determined by [`UBitint::is_in_range`].
+    #[must_use]
     unsafe fn unchecked_add(self, rhs: Rhs) -> Self::Output;
 }
 
@@ -183,6 +198,7 @@ pub trait UncheckedMul<Rhs = Self> {
     ///
     /// The result must be in range for this type. For unsigned `bitint`s, this
     /// is as determined by [`UBitint::is_in_range`].
+    #[must_use]
     unsafe fn unchecked_mul(self, rhs: Rhs) -> Self::Output;
 }
 
@@ -200,5 +216,6 @@ pub trait UncheckedSub<Rhs = Self> {
     ///
     /// The result must be in range for this type. For unsigned `bitint`s, this
     /// is as determined by [`UBitint::is_in_range`].
+    #[must_use]
     unsafe fn unchecked_sub(self, rhs: Rhs) -> Self::Output;
 }

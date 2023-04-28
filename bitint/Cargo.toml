@@ -12,6 +12,7 @@ unchecked_math = []
 _nightly = []
 
 [dependencies]
+assume = "0.5"
 bitint-macros = { path = "../bitint-macros" }
 num-traits = { version = "0.2", default-features = false }
 paste = "1"

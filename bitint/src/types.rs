@@ -4,6 +4,7 @@ use core::fmt::{self, Display, Formatter};
 use core::ops::{Add, Div, Mul, Rem, Sub};
 use core::str::FromStr;
 
+use assume::assume;
 use num_traits::{Num, One, Zero};
 use paste::paste;
 use seq_macro::seq;
@@ -69,6 +70,7 @@ macro_rules! define_ubitint_type {
                 #[inline(always)]
                 #[must_use]
                 pub const unsafe fn new_unchecked(value: $primitive) -> Self {
+                    assume!(unsafe: Self::is_in_range(value));
                     Self(value)
                 }
 
@@ -82,6 +84,7 @@ macro_rules! define_ubitint_type {
                 #[inline(always)]
                 #[must_use]
                 pub const fn to_primitive(self) -> $primitive {
+                    assume!(unsafe: Self::is_in_range(self.0));
                     self.0
                 }
 
@@ -98,6 +101,8 @@ macro_rules! define_ubitint_type {
                 ///
                 /// This method is a `const` variant of
                 /// [`UBitint::is_in_range`].
+                #[inline(always)]
+                #[must_use]
                 pub const fn is_in_range(value: $primitive) -> bool {
                     value & !Self::MASK == 0
                 }
@@ -120,42 +125,51 @@ macro_rules! define_ubitint_type {
                 const ZERO: Self = Self::new_masked(0);
                 const ONE: Self = Self::new_masked(1);
 
+                #[inline(always)]
                 fn new(value: $primitive) -> Option<Self> {
                     Self::new(value)
                 }
 
+                #[inline(always)]
                 fn new_masked(value: $primitive) -> Self {
                     Self::new_masked(value)
                 }
 
+                #[inline(always)]
                 unsafe fn new_unchecked(value: $primitive) -> Self {
                     Self::new_unchecked(value)
                 }
 
+                #[inline(always)]
                 fn to_primitive(self) -> $primitive {
                     self.to_primitive()
                 }
 
+                #[inline(always)]
                 fn is_in_range(value: $primitive) -> bool {
                     Self::is_in_range(value)
                 }
             }
 
             impl Zero for [<U $bits>] {
+                #[inline(always)]
                 fn zero() -> Self {
                     Self::ZERO
                 }
 
+                #[inline(always)]
                 fn is_zero(&self) -> bool {
                     *self == Self::ZERO
                 }
             }
 
             impl One for [<U $bits>] {
+                #[inline(always)]
                 fn one() -> Self {
                     Self::ONE
                 }
 
+                #[inline(always)]
                 fn is_one(&self) -> bool {
                     *self == Self::ONE
                 }
@@ -231,6 +245,7 @@ macro_rules! define_ubitint_type {
     (@impl_from $self:ident $primitive:ident any_bit_pattern) => {
         paste! {
             impl PrimitiveSizedBitint for $self {
+                #[inline(always)]
                 fn from_primitive(value: $primitive) -> Self {
                     Self(value)
                 }
@@ -261,6 +276,7 @@ macro_rules! define_ubitint_type {
             impl $trait<$primitive> for $self {
                 type Output = Self;
 
+                #[inline(always)]
                 fn $method(self, rhs: $primitive) -> Self {
                     let result = self.to_primitive() $op rhs;
                     // Perform a sentinel operation with overflow behavior that
@@ -281,6 +297,7 @@ macro_rules! define_ubitint_type {
             impl $trait for $self {
                 type Output = Self;
 
+                #[inline(always)]
                 fn $method(self, rhs: Self) -> Self {
                     self $op rhs.to_primitive()
                 }
@@ -294,18 +311,21 @@ macro_rules! define_ubitint_type {
     (@impl_checked_op $self:ident $primitive:ident $trait:ident::$method:ident) => {
         paste! {
             impl [<Checked $trait>]<$primitive> for $self {
+                #[inline(always)]
                 fn [<checked_ $method>](self, rhs: $primitive) -> Option<Self> {
                     self.to_primitive().[<checked_ $method>](rhs).and_then(Self::new)
                 }
             }
 
             impl [<Checked $trait>] for $self {
+                #[inline(always)]
                 fn [<checked_ $method>](self, rhs: Self) -> Option<Self> {
                     self.[<checked_ $method>](rhs.to_primitive())
                 }
             }
 
             impl num_traits::[<Checked $trait>] for $self {
+                #[inline(always)]
                 fn [<checked_ $method>](&self, v: &Self) -> Option<Self> {
                     [<Checked $trait>]::[<checked_ $method>](*self, *v)
                 }
@@ -316,18 +336,21 @@ macro_rules! define_ubitint_type {
     (@impl_wrapping_op $self:ident $primitive:ident $trait:ident::$method:ident ext) => {
         paste! {
             impl [<Wrapping $trait>]<$primitive> for $self {
+                #[inline(always)]
                 fn [<wrapping_ $method>](self, rhs: $primitive) -> Self {
                     Self::new_masked(self.to_primitive().[<wrapping_ $method>](rhs))
                 }
             }
 
             impl [<Wrapping $trait>] for $self {
+                #[inline(always)]
                 fn [<wrapping_ $method>](self, rhs: Self) -> Self {
                     self.[<wrapping_ $method>](rhs.to_primitive())
                 }
             }
 
             impl num_traits::[<Wrapping $trait>] for $self {
+                #[inline(always)]
                 fn [<wrapping_ $method>](&self, v: &Self) -> Self {
                     [<Wrapping $trait>]::[<wrapping_ $method>](*self, *v)
                 }
@@ -342,6 +365,7 @@ macro_rules! define_ubitint_type {
             impl [<Unchecked $trait>]<$primitive> for $self {
                 type Output = Self;
 
+                #[inline(always)]
                 unsafe fn [<unchecked_ $method>](self, rhs: $primitive) -> Self {
                     Self::new_unchecked(self.to_primitive().[<unchecked_ $method>](rhs))
                 }
@@ -352,6 +376,7 @@ macro_rules! define_ubitint_type {
             impl [<Unchecked $trait>] for $self {
                 type Output = Self;
 
+                #[inline(always)]
                 unsafe fn [<unchecked_ $method>](self, rhs: Self) -> Self {
                     self.[<unchecked_ $method>](rhs.to_primitive())
                 }
@@ -372,6 +397,7 @@ define_ubitint_type!(65..128: u128; upper_bits_clear);
 define_ubitint_type!(128: u128; any_bit_pattern);
 
 impl From<bool> for U1 {
+    #[inline(always)]
     fn from(value: bool) -> Self {
         // SAFETY: `bool` and `U1` have the same size (1), alignment (1), and
         // valid bit patterns (0u8 and 1u8).
@@ -380,6 +406,7 @@ impl From<bool> for U1 {
 }
 
 impl From<U1> for bool {
+    #[inline(always)]
     fn from(value: U1) -> Self {
         // SAFETY: `bool` and `U1` have the same size (1), alignment (1), and
         // valid bit patterns (0u8 and 1u8).
