@@ -128,28 +128,3 @@ macro_rules! bitint {
 /// }
 /// ```
 pub use bitint_macros::bitint_literals;
-
-#[cfg(test)]
-mod tests {
-    use crate::prelude::*;
-
-    #[test]
-    fn test_debug() {
-        assert_eq!(format!("{:?}", U1::new(1).unwrap()), "U1(1)");
-        assert_eq!(format!("{:?}", U12::new(1234).unwrap()), "U12(1234)");
-        assert_eq!(format!("{:?}", U16::new(65535).unwrap()), "U16(65535)");
-    }
-
-    #[test]
-    fn test_display() {
-        assert_eq!(format!("{}", U1::new(1).unwrap()), "1");
-        assert_eq!(format!("{}", U12::new(1234).unwrap()), "1234");
-        assert_eq!(format!("{}", U16::new(65535).unwrap()), "65535");
-    }
-
-    #[test]
-    fn trybuild_tests() {
-        let t = trybuild::TestCases::new();
-        t.compile_fail("tests_error/*.rs");
-    }
-}

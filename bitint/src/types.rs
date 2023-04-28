@@ -2,7 +2,10 @@
 
 use core::cmp::Ordering;
 use core::fmt::{self, Display, Formatter};
-use core::ops::{Add, Div, Mul, Rem, Sub};
+use core::ops::{
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
+    Mul, MulAssign, Not, Rem, RemAssign, Sub, SubAssign,
+};
 use core::str::FromStr;
 
 use assume::assume;
@@ -260,12 +263,77 @@ macro_rules! define_ubitint_type {
                 }
             }
 
+            impl BitAnd<$primitive> for [<U $bits>] {
+                type Output = Self;
+
+                #[inline(always)]
+                fn bitand(self, rhs: $primitive) -> Self {
+                    // SAFETY: The unused upper bits are clear in at least one
+                    // operand, so they will be clear in the result.
+                    unsafe { Self::new_unchecked(self.to_primitive() & rhs) }
+                }
+            }
+
+            impl BitAnd for [<U $bits>] {
+                type Output = Self;
+
+                #[inline(always)]
+                fn bitand(self, rhs: Self) -> Self {
+                    self & rhs.to_primitive()
+                }
+            }
+
+            impl BitOr for [<U $bits>] {
+                type Output = Self;
+
+                #[inline(always)]
+                fn bitor(self, rhs: Self) -> Self {
+                    // SAFETY: The unused upper bits are clear in both operands,
+                    // so they will be clear in the result.
+                    unsafe { Self::new_unchecked(self.to_primitive() | rhs.to_primitive()) }
+                }
+            }
+
+            impl BitXor for [<U $bits>] {
+                type Output = Self;
+
+                #[inline(always)]
+                fn bitxor(self, rhs: Self) -> Self {
+                    // SAFETY: The unused upper bits are clear in both operands,
+                    // so they will be clear in the result.
+                    unsafe { Self::new_unchecked(self.to_primitive() ^ rhs.to_primitive()) }
+                }
+            }
+
+            impl Not for [<U $bits>] {
+                type Output = Self;
+
+                #[inline(always)]
+                fn not(self) -> Self {
+                    self ^ Self::MAX
+                }
+            }
+
             define_ubitint_type!(@impl_from [<U $bits>] $primitive $flag);
             define_ubitint_type!(@impl_op [<U $bits>] $primitive Add::add + ext);
             define_ubitint_type!(@impl_op [<U $bits>] $primitive Div::div /);
             define_ubitint_type!(@impl_op [<U $bits>] $primitive Mul::mul * ext);
             define_ubitint_type!(@impl_op [<U $bits>] $primitive Rem::rem %);
             define_ubitint_type!(@impl_op [<U $bits>] $primitive Sub::sub - ext);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Add::<$primitive>::add +);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Add::<Self>::add +);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Div::<$primitive>::div /);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Div::<Self>::div /);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Mul::<$primitive>::mul *);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Mul::<Self>::mul *);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Rem::<$primitive>::rem %);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Rem::<Self>::rem %);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Sub::<$primitive>::sub -);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] Sub::<Self>::sub -);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] BitAnd::<$primitive>::bitand &);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] BitAnd::<Self>::bitand &);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] BitOr::<Self>::bitor |);
+            define_ubitint_type!(@impl_op_assign [<U $bits>] BitXor::<Self>::bitxor ^);
         }
     };
     (@type_doc $bits:literal $primitive:ident upper_bits_clear) => {
@@ -430,6 +498,16 @@ macro_rules! define_ubitint_type {
                 #[inline(always)]
                 unsafe fn [<unchecked_ $method>](self, rhs: Self) -> Self {
                     self.[<unchecked_ $method>](rhs.to_primitive())
+                }
+            }
+        }
+    };
+    (@impl_op_assign $self:ident $trait:ident::<$rhs:ident>::$method:ident $op:tt) => {
+        paste! {
+            impl [<$trait Assign>]<$rhs> for $self {
+                #[inline(always)]
+                fn [<$method _assign>](&mut self, rhs: $rhs) {
+                    *self = *self $op rhs;
                 }
             }
         }
