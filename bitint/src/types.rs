@@ -29,6 +29,40 @@ macro_rules! define_ubitint_type {
             pub struct [<U $bits>]($primitive);
 
             impl [<U $bits>] {
+                /// The bit width of this type.
+                ///
+                /// See also: [`UBitint::BITS`]
+                pub const BITS: u32 = $bits;
+
+                /// The bit mask for the bits that may be set in values of this
+                /// type.
+                ///
+                /// See also: [`UBitint::MASK`]
+                pub const MASK: $primitive = match (1 as $primitive).checked_shl($bits) {
+                    Some(x) => x.wrapping_sub(1),
+                    None => $primitive::MAX,
+                };
+
+                /// The smallest value of this type.
+                ///
+                /// See also: [`UBitint::MIN`]
+                pub const MIN: Self = Self::new_masked(0);
+
+                /// The largest value of this type.
+                ///
+                /// See also: [`UBitint::MAX`]
+                pub const MAX: Self = Self::new_masked($primitive::MAX);
+
+                /// The value `0` represented in this type.
+                ///
+                /// See also: [`UBitint::ZERO`]
+                pub const ZERO: Self = Self::new_masked(0);
+
+                /// The value `1` represented in this type.
+                ///
+                /// See also: [`UBitint::ONE`]
+                pub const ONE: Self = Self::new_masked(1);
+
                 /// Creates a `bitint` from a primitive value if it is in range
                 /// for this type, as determined by
                 /// [`is_in_range`](Self::is_in_range).
@@ -114,17 +148,12 @@ macro_rules! define_ubitint_type {
             impl UBitint for [<U $bits>] {
                 type Primitive = $primitive;
 
-                const BITS: u32 = $bits;
-                const MASK: $primitive = match (1 as $primitive).checked_shl($bits) {
-                    Some(x) => x.wrapping_sub(1),
-                    None => $primitive::MAX,
-                };
-
-                const MIN: Self = Self::new_masked(0);
-                const MAX: Self = Self::new_masked($primitive::MAX);
-
-                const ZERO: Self = Self::new_masked(0);
-                const ONE: Self = Self::new_masked(1);
+                const BITS: u32 = Self::BITS;
+                const MASK: $primitive = Self::MASK;
+                const MIN: Self = Self::MIN;
+                const MAX: Self = Self::MAX;
+                const ZERO: Self = Self::ZERO;
+                const ONE: Self = Self::ONE;
 
                 #[inline(always)]
                 fn new(value: $primitive) -> Option<Self> {
