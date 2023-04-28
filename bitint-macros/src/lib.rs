@@ -89,7 +89,7 @@ fn rewrite_literal(crate_path: &Path, literal: Literal) -> RewriteResult {
     let mut new_literal = Literal::u128_unsuffixed(value);
     new_literal.set_span(span);
     RewriteResult::Rewritten(
-        quote_spanned! {span=> #crate_path::types::#type_name::new_masked(#new_literal) },
+        quote_spanned! {span=> #crate_path::#type_name::new_masked(#new_literal) },
     )
 }
 
@@ -234,7 +234,7 @@ mod tests {
     fn bitint_simple() {
         assert_eq!(
             syn::parse2::<Expr>(bitint_impl(quote! { (some::path::to, 7_U3) })).unwrap(),
-            syn::parse2::<Expr>(quote! { some::path::to::types::U3::new_masked(7) }).unwrap(),
+            syn::parse2::<Expr>(quote! { some::path::to::U3::new_masked(7) }).unwrap(),
         );
     }
 
@@ -272,7 +272,7 @@ mod tests {
             ))
             .unwrap(),
             syn::parse2::<ParseItems>(quote! {
-                fn foo() { ::bitint::types::U24::new_masked(1234567) }
+                fn foo() { ::bitint::U24::new_masked(1234567) }
             })
             .unwrap(),
         );
@@ -287,7 +287,7 @@ mod tests {
             ))
             .unwrap(),
             syn::parse2::<ParseItems>(quote! {
-                fn foo() { path::to::bitint_crate::types::U24::new_masked(1234567) }
+                fn foo() { path::to::bitint_crate::U24::new_masked(1234567) }
             })
             .unwrap(),
         );

@@ -1,17 +1,21 @@
 Integer types that have a logical size measured in bits.
 
-This crate provides the [`UBitint`] trait and 128 types named
-[`U1`](crate::types::U1) through [`U128`](crate::types::U128) that implement it.
-Each type wraps the smallest primitive unsigned integer type that can contain
-it. The types that are not the same width as a primitive unsigned integer type
-impose a validity constraint---the value is represented in the least significant
-bits and the upper bits are always clear.
+This crate provides the [`UBitint`] trait and 128 types named [`U1`](crate::U1)
+through [`U128`](crate::U128) that implement it. Each type wraps the smallest
+primitive unsigned integer type that can contain it. The types that are not the
+same width as a primitive unsigned integer type impose a validity
+constraint---the value is represented in the least significant bits and the
+upper bits are always clear.
 
 # Demo
 
 ```
 // Recommended, but not required.
 use bitint::prelude::*;
+// Additional arithmetic traits.
+use bitint::{CheckedAdd, WrappingAdd};
+#[cfg(feature = "unchecked_math")]
+use bitint::UncheckedAdd;
 
 // Use the bitint! macro to write a bitint literal. Underscores are permitted
 // anywhere in a Rust literal and are encouraged for readability.

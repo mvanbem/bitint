@@ -10,7 +10,7 @@ use core::num::ParseIntError;
 
 pub mod prelude;
 mod traits;
-pub mod types;
+mod types;
 
 // For macro access via `$crate`.
 #[doc(hidden)]
@@ -21,6 +21,8 @@ pub mod __private {
 mod sealed {
     pub trait Sealed {}
 }
+
+pub use types::*;
 
 /// The error type returned when a [`TryFrom`] conversion to a `bitint` fails.
 #[derive(Debug)]
