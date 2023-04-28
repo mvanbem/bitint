@@ -1,5 +1,6 @@
 //! The unsigned `bitint` types [`U1`] through [`U128`].
 
+use core::cmp::Ordering;
 use core::fmt::{self, Display, Formatter};
 use core::ops::{Add, Div, Mul, Rem, Sub};
 use core::str::FromStr;
@@ -22,7 +23,7 @@ macro_rules! define_ubitint_type {
     };
     ($bits:literal: $primitive:ident; $flag:tt) => {
         paste! {
-            #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            #[derive(Clone, Copy, Debug, Eq, Hash)]
             #[doc = define_ubitint_type!(@type_doc $bits $primitive $flag)]
             #[repr(transparent)]
             pub struct [<U $bits>]($primitive);
@@ -206,6 +207,27 @@ macro_rules! define_ubitint_type {
                 #[inline(always)]
                 fn from(value: [<U $bits>]) -> Self {
                     value.to_primitive()
+                }
+            }
+
+            impl PartialEq for [<U $bits>] {
+                #[inline(always)]
+                fn eq(&self, other: &Self) -> bool {
+                    self.to_primitive() == other.to_primitive()
+                }
+            }
+
+            impl PartialOrd for [<U $bits>] {
+                #[inline(always)]
+                fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+                    self.to_primitive().partial_cmp(&other.to_primitive())
+                }
+            }
+
+            impl Ord for [<U $bits>] {
+                #[inline(always)]
+                fn cmp(&self, other: &Self) -> Ordering {
+                    self.to_primitive().cmp(&other.to_primitive())
                 }
             }
 
