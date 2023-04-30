@@ -1,0 +1,11 @@
+error: integer literal value 2 out of range for U1
+ --> tests_error/error_in_hostile_environment.rs:4:43
+  |
+4 | const _: ::bitint::U5 = ::bitint::bitint!(2_U1);
+  |                                           ^^^^
+
+error: integer literal value 2 out of range for U1
+ --> tests_error/error_in_hostile_environment.rs:9:13
+  |
+9 |     let _ = 2_U1;
+  |             ^^^^

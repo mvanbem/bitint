@@ -46,6 +46,19 @@ fn test_bit_assign_ops() {
     });
 }
 
+mod hostile_environment {
+    mod bitint {}
+    mod core {}
+
+    const _: ::bitint::U5 = ::bitint::bitint!(1_U5);
+
+    #[allow(unused)]
+    #[::bitint::bitint_literals]
+    fn example() {
+        let _ = 1_U5;
+    }
+}
+
 #[test]
 fn trybuild_tests() {
     let t = trybuild::TestCases::new();
