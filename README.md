@@ -1,15 +1,17 @@
-Integer types that have a logical size measured in bits.
+# bitint
 
-This crate provides the [`UBitint`] trait and 128 types named [`U1`](crate::U1)
-through [`U128`](crate::U128) that implement it. Each type wraps the smallest
-primitive unsigned integer type that can contain it. The types that are not the
-same width as a primitive unsigned integer type impose a validity
-constraint---the value is represented in the least significant bits and the
-upper bits are always clear.
+A bit-integer library for Rust. `bitint`s are like primitive integer types, but
+their logical width is measured in bits.
 
-# Demo
+This crate provides the `UBitint` trait and 128 types named `U1` through `U128`
+that implement it. Each type wraps the smallest primitive unsigned integer type
+that can contain it. The types that are not the same width as their primitive
+type impose a validity constraint---the value is represented in the least
+significant bits and the upper bits are always clear.
 
-```
+## Demo
+
+```rust
 // Recommended, but not required.
 use bitint::prelude::*;
 
@@ -81,7 +83,7 @@ fn demo() {
 };
 ```
 
-# Crate features
+## Crate features
 
 * **unchecked_math** - Enables the `unchecked_*` methods on unsigned `bitint`
   types. Requires a nightly Rust compiler.
