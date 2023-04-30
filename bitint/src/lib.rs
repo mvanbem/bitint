@@ -1,5 +1,9 @@
 #![cfg_attr(not(test), no_std)]
-#![cfg_attr(feature = "unchecked_math", feature(unchecked_math))]
+#![cfg_attr(
+    feature = "unchecked_math",
+    feature(unchecked_math),
+    feature(const_inherent_unchecked_arith)
+)]
 #![cfg_attr(feature = "_nightly", feature(doc_cfg))]
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]

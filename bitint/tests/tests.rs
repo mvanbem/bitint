@@ -19,7 +19,6 @@ fn test_display() {
 #[bitint_literals]
 #[test]
 fn test_bit_ops() {
-    assert_eq!(0b1000_U4, 0b1010_U4 & 0b1100);
     assert_eq!(0b1000_U4, 0b1010_U4 & 0b1100_U4);
     assert_eq!(0b1110_U4, 0b1010_U4 | 0b1100_U4);
     assert_eq!(0b0110_U4, 0b1010_U4 ^ 0b1100_U4);
@@ -30,11 +29,6 @@ fn test_bit_ops() {
 #[bitint_literals]
 #[test]
 fn test_bit_assign_ops() {
-    assert_eq!(0b1000_U4, {
-        let mut x = 0b1010_U4;
-        x &= 0b1100;
-        x
-    });
     assert_eq!(0b1000_U4, {
         let mut x = 0b1010_U4;
         x &= 0b1100_U4;

@@ -13,12 +13,7 @@ use num_traits::{Num, One, Zero};
 use paste::paste;
 use seq_macro::seq;
 
-use crate::{
-    CheckedAdd, CheckedDiv, CheckedMul, CheckedRem, CheckedSub, ParseBitintError,
-    PrimitiveSizedBitint, RangeError, UBitint, WrappingAdd, WrappingMul, WrappingSub,
-};
-#[cfg(feature = "unchecked_math")]
-use crate::{UncheckedAdd, UncheckedMul, UncheckedSub};
+use crate::{ParseBitintError, RangeError, UBitint};
 
 macro_rules! define_ubitint_type {
     ($a:literal..$b:literal: $primitive:ident; $flag:tt) => {
@@ -26,315 +21,282 @@ macro_rules! define_ubitint_type {
     };
     ($bits:literal: $primitive:ident; $flag:tt) => {
         paste! {
-            #[derive(Clone, Copy, Debug, Eq, Hash)]
-            #[doc = define_ubitint_type!(@type_doc $bits $primitive $flag)]
-            #[repr(transparent)]
-            pub struct [<U $bits>]($primitive);
-
-            impl [<U $bits>] {
-                /// The bit width of this type.
-                ///
-                /// See also: [`UBitint::BITS`]
-                pub const BITS: u32 = $bits;
-
-                /// The bit mask for the bits that may be set in values of this
-                /// type.
-                ///
-                /// See also: [`UBitint::MASK`]
-                pub const MASK: $primitive = match (1 as $primitive).checked_shl($bits) {
-                    Some(x) => x.wrapping_sub(1),
-                    None => $primitive::MAX,
-                };
-
-                /// The smallest value of this type.
-                ///
-                /// See also: [`UBitint::MIN`]
-                pub const MIN: Self = Self::new_masked(0);
-
-                /// The largest value of this type.
-                ///
-                /// See also: [`UBitint::MAX`]
-                pub const MAX: Self = Self::new_masked($primitive::MAX);
-
-                /// The value `0` represented in this type.
-                ///
-                /// See also: [`UBitint::ZERO`]
-                pub const ZERO: Self = Self::new_masked(0);
-
-                /// The value `1` represented in this type.
-                ///
-                /// See also: [`UBitint::ONE`]
-                pub const ONE: Self = Self::new_masked(1);
-
-                /// Creates a `bitint` from a primitive value if it is in range
-                /// for this type, as determined by
-                /// [`is_in_range`](Self::is_in_range).
-                ///
-                /// This method is a `const` variant of [`UBitint::new`].
-                #[inline(always)]
-                #[must_use]
-                pub const fn new(value: $primitive) -> Option<Self> {
-                    if Self::is_in_range(value) {
-                        Some(Self(value))
-                    } else {
-                        None
-                    }
-                }
-
-                /// Creates a `bitint` by masking off the upper bits of a
-                /// primitive value.
-                ///
-                /// This conversion is lossless if the value is in range for
-                /// this type, as determined by
-                /// [`is_in_range`](Self::is_in_range).
-                ///
-                /// This method is a `const` variant of [`UBitint::new_masked`].
-                #[inline(always)]
-                #[must_use]
-                pub const fn new_masked(value: $primitive) -> Self {
-                    Self(value & Self::MASK)
-                }
-
-                /// Creates a `bitint` from a primitive value without checking
-                /// whether it is in range for this type.
-                ///
-                /// # Safety
-                ///
-                /// The value must be in range for this type, as determined by
-                /// [`is_in_range`](Self::is_in_range).
-                ///
-                /// This method is a `const` variant of
-                /// [`UBitint::new_unchecked`].
-                #[inline(always)]
-                #[must_use]
-                pub const unsafe fn new_unchecked(value: $primitive) -> Self {
-                    assume!(unsafe: Self::is_in_range(value));
-                    Self(value)
-                }
-
-                /// Converts the value to a primitive type.
-                ///
-                /// The result is in range for this type, as determined by
-                /// [`is_in_range`](Self::is_in_range).
-                ///
-                /// This method is a `const` variant of
-                /// [`UBitint::to_primitive`].
-                #[inline(always)]
-                #[must_use]
-                pub const fn to_primitive(self) -> $primitive {
-                    assume!(unsafe: Self::is_in_range(self.0));
-                    self.0
-                }
-
-                /// Checks whether a primitive value is in range for this type.
-                ///
-                /// There are a few equivalent ways to express this check.
-                ///
-                /// - The unused most significant bits are clear: `(value &
-                ///   !Self::MASK) == 0`
-                /// - The value is between [`MIN`](Self::MIN) and
-                ///   [`MAX`](Self::MAX), inclusive: `value >=
-                ///   Self::MIN.as_primitive() && value <=
-                ///   Self::MAX.as_primitive()`
-                ///
-                /// This method is a `const` variant of
-                /// [`UBitint::is_in_range`].
-                #[inline(always)]
-                #[must_use]
-                pub const fn is_in_range(value: $primitive) -> bool {
-                    value & !Self::MASK == 0
-                }
-            }
-
-            impl crate::sealed::Sealed for [<U $bits>] {}
-
-            impl UBitint for [<U $bits>] {
-                type Primitive = $primitive;
-
-                const BITS: u32 = Self::BITS;
-                const MASK: $primitive = Self::MASK;
-                const MIN: Self = Self::MIN;
-                const MAX: Self = Self::MAX;
-                const ZERO: Self = Self::ZERO;
-                const ONE: Self = Self::ONE;
-
-                #[inline(always)]
-                fn new(value: $primitive) -> Option<Self> {
-                    Self::new(value)
-                }
-
-                #[inline(always)]
-                fn new_masked(value: $primitive) -> Self {
-                    Self::new_masked(value)
-                }
-
-                #[inline(always)]
-                unsafe fn new_unchecked(value: $primitive) -> Self {
-                    Self::new_unchecked(value)
-                }
-
-                #[inline(always)]
-                fn to_primitive(self) -> $primitive {
-                    self.to_primitive()
-                }
-
-                #[inline(always)]
-                fn is_in_range(value: $primitive) -> bool {
-                    Self::is_in_range(value)
-                }
-            }
-
-            impl Zero for [<U $bits>] {
-                #[inline(always)]
-                fn zero() -> Self {
-                    Self::ZERO
-                }
-
-                #[inline(always)]
-                fn is_zero(&self) -> bool {
-                    *self == Self::ZERO
-                }
-            }
-
-            impl One for [<U $bits>] {
-                #[inline(always)]
-                fn one() -> Self {
-                    Self::ONE
-                }
-
-                #[inline(always)]
-                fn is_one(&self) -> bool {
-                    *self == Self::ONE
-                }
-            }
-
-            impl FromStr for [<U $bits>] {
-                type Err = ParseBitintError;
-
-                fn from_str(s: &str) -> Result<Self, ParseBitintError> {
-                    Self::new($primitive::from_str(s)?)
-                        .ok_or_else(|| RangeError(()).into())
-                }
-            }
-
-            impl Num for [<U $bits>] {
-                type FromStrRadixErr = ParseBitintError;
-
-                fn from_str_radix(
-                    str: &str,
-                    radix: u32
-                ) -> Result<Self, ParseBitintError> {
-                    Self::new($primitive::from_str_radix(str, radix)?)
-                        .ok_or_else(|| RangeError(()).into())
-                }
-            }
-
-            impl Display for [<U $bits>] {
-                fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-                    write!(f, "{}", self.to_primitive())
-                }
-            }
-
-            impl From<[<U $bits>]> for $primitive {
-                #[inline(always)]
-                fn from(value: [<U $bits>]) -> Self {
-                    value.to_primitive()
-                }
-            }
-
-            impl PartialEq for [<U $bits>] {
-                #[inline(always)]
-                fn eq(&self, other: &Self) -> bool {
-                    self.to_primitive() == other.to_primitive()
-                }
-            }
-
-            impl PartialOrd for [<U $bits>] {
-                #[inline(always)]
-                fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-                    self.to_primitive().partial_cmp(&other.to_primitive())
-                }
-            }
-
-            impl Ord for [<U $bits>] {
-                #[inline(always)]
-                fn cmp(&self, other: &Self) -> Ordering {
-                    self.to_primitive().cmp(&other.to_primitive())
-                }
-            }
-
-            impl BitAnd<$primitive> for [<U $bits>] {
-                type Output = Self;
-
-                #[inline(always)]
-                fn bitand(self, rhs: $primitive) -> Self {
-                    // SAFETY: The unused upper bits are clear in at least one
-                    // operand, so they will be clear in the result.
-                    unsafe { Self::new_unchecked(self.to_primitive() & rhs) }
-                }
-            }
-
-            impl BitAnd for [<U $bits>] {
-                type Output = Self;
-
-                #[inline(always)]
-                fn bitand(self, rhs: Self) -> Self {
-                    self & rhs.to_primitive()
-                }
-            }
-
-            impl BitOr for [<U $bits>] {
-                type Output = Self;
-
-                #[inline(always)]
-                fn bitor(self, rhs: Self) -> Self {
-                    // SAFETY: The unused upper bits are clear in both operands,
-                    // so they will be clear in the result.
-                    unsafe { Self::new_unchecked(self.to_primitive() | rhs.to_primitive()) }
-                }
-            }
-
-            impl BitXor for [<U $bits>] {
-                type Output = Self;
-
-                #[inline(always)]
-                fn bitxor(self, rhs: Self) -> Self {
-                    // SAFETY: The unused upper bits are clear in both operands,
-                    // so they will be clear in the result.
-                    unsafe { Self::new_unchecked(self.to_primitive() ^ rhs.to_primitive()) }
-                }
-            }
-
-            impl Not for [<U $bits>] {
-                type Output = Self;
-
-                #[inline(always)]
-                fn not(self) -> Self {
-                    self ^ Self::MAX
-                }
-            }
-
-            define_ubitint_type!(@impl_from [<U $bits>] $primitive $flag);
-            define_ubitint_type!(@impl_op [<U $bits>] $primitive Add::add + ext);
-            define_ubitint_type!(@impl_op [<U $bits>] $primitive Div::div /);
-            define_ubitint_type!(@impl_op [<U $bits>] $primitive Mul::mul * ext);
-            define_ubitint_type!(@impl_op [<U $bits>] $primitive Rem::rem %);
-            define_ubitint_type!(@impl_op [<U $bits>] $primitive Sub::sub - ext);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Add::<$primitive>::add +);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Add::<Self>::add +);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Div::<$primitive>::div /);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Div::<Self>::div /);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Mul::<$primitive>::mul *);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Mul::<Self>::mul *);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Rem::<$primitive>::rem %);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Rem::<Self>::rem %);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Sub::<$primitive>::sub -);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] Sub::<Self>::sub -);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] BitAnd::<$primitive>::bitand &);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] BitAnd::<Self>::bitand &);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] BitOr::<Self>::bitor |);
-            define_ubitint_type!(@impl_op_assign [<U $bits>] BitXor::<Self>::bitxor ^);
+            define_ubitint_type!(@define [<U $bits>] $primitive $bits $flag);
         }
+    };
+    (@define $self:ident $primitive:ident $bits:literal $flag:tt) => {
+        #[derive(Clone, Copy, Debug, Eq, Hash)]
+        #[doc = define_ubitint_type!(@type_doc $bits $primitive $flag)]
+        #[repr(transparent)]
+        pub struct $self($primitive);
+
+        impl $self {
+            /// The bit width of this type.
+            ///
+            /// See also: [`UBitint::BITS`]
+            pub const BITS: u32 = $bits;
+
+            /// The bit mask for the bits that may be set in values of this
+            /// type.
+            ///
+            /// See also: [`UBitint::MASK`]
+            pub const MASK: $primitive = match (1 as $primitive).checked_shl($bits) {
+                Some(x) => x.wrapping_sub(1),
+                None => $primitive::MAX,
+            };
+
+            /// The smallest value of this type.
+            ///
+            /// See also: [`UBitint::MIN`]
+            pub const MIN: Self = Self::new_masked(0);
+
+            /// The largest value of this type.
+            ///
+            /// See also: [`UBitint::MAX`]
+            pub const MAX: Self = Self::new_masked($primitive::MAX);
+
+            /// The value `0` represented in this type.
+            ///
+            /// See also: [`UBitint::ZERO`], [`num_traits::Zero`]
+            pub const ZERO: Self = Self::new_masked(0);
+
+            /// The value `1` represented in this type.
+            ///
+            /// See also: [`UBitint::ONE`], [`num_traits::One`]
+            pub const ONE: Self = Self::new_masked(1);
+
+            /// Creates a `bitint` from a primitive value if it is in range for
+            /// this type, as determined by [`is_in_range`](Self::is_in_range).
+            ///
+            /// This method is a `const` variant of [`UBitint::new`].
+            #[inline(always)]
+            #[must_use]
+            pub const fn new(value: $primitive) -> Option<Self> {
+                if Self::is_in_range(value) {
+                    Some(Self(value))
+                } else {
+                    None
+                }
+            }
+
+            /// Creates a `bitint` by masking off the upper bits of a primitive
+            /// value.
+            ///
+            /// This conversion is lossless if the value is in range for this
+            /// type, as determined by [`is_in_range`](Self::is_in_range).
+            ///
+            /// This method is a `const` variant of [`UBitint::new_masked`].
+            #[inline(always)]
+            #[must_use]
+            pub const fn new_masked(value: $primitive) -> Self {
+                Self(value & Self::MASK)
+            }
+
+            /// Creates a `bitint` from a primitive value without checking
+            /// whether it is in range for this type.
+            ///
+            /// # Safety
+            ///
+            /// The value must be in range for this type, as determined by
+            /// [`is_in_range`](Self::is_in_range).
+            ///
+            /// This method is a `const` variant of [`UBitint::new_unchecked`].
+            #[inline(always)]
+            #[must_use]
+            pub const unsafe fn new_unchecked(value: $primitive) -> Self {
+                assume!(unsafe: Self::is_in_range(value));
+                Self(value)
+            }
+
+            define_ubitint_type!(@from_primitive $primitive $flag);
+
+            /// Converts the value to a primitive type.
+            ///
+            /// The result is in range for this type, as determined by
+            /// [`is_in_range`](Self::is_in_range).
+            #[inline(always)]
+            #[must_use]
+            pub const fn to_primitive(self) -> $primitive {
+                assume!(unsafe: Self::is_in_range(self.0));
+                self.0
+            }
+
+            /// Checks whether a primitive value is in range for this type.
+            ///
+            /// There are a few equivalent ways to express this check.
+            ///
+            /// - The unused most significant bits are clear: `(value &
+            ///   !Self::MASK) == 0`
+            /// - The value is between [`MIN`](Self::MIN) and
+            ///   [`MAX`](Self::MAX), inclusive: `value >=
+            ///   Self::MIN.as_primitive() && value <= Self::MAX.as_primitive()`
+            ///
+            /// This method is a `const` variant of [`UBitint::is_in_range`].
+            #[inline(always)]
+            #[must_use]
+            pub const fn is_in_range(value: $primitive) -> bool {
+                value & !Self::MASK == 0
+            }
+
+            define_ubitint_type!(@checked_op_method checked_add "addition" "+" "overflow occurred");
+            define_ubitint_type!(@unchecked_op_method unchecked_add "addition" "+");
+            define_ubitint_type!(@checked_op_method checked_sub "subtraction" "-" "overflow occurred");
+            define_ubitint_type!(@unchecked_op_method unchecked_sub "subtraction" "-");
+            define_ubitint_type!(@checked_op_method checked_mul "multiplication" "*" "overflow occurred");
+            define_ubitint_type!(@unchecked_op_method unchecked_mul "multiplication" "*");
+            define_ubitint_type!(@checked_op_method checked_div "division" "/" "`rhs == 0`");
+            define_ubitint_type!(@checked_op_method checked_rem "remainder" "%" "`rhs == 0`");
+            define_ubitint_type!(@wrapping_op_method wrapping_add "addition" "+");
+            define_ubitint_type!(@wrapping_op_method wrapping_sub "subtraction" "-");
+            define_ubitint_type!(@wrapping_op_method wrapping_mul "multiplication" "*");
+        }
+
+        impl crate::sealed::Sealed for $self {}
+
+        impl UBitint for $self {
+            type Primitive = $primitive;
+
+            const BITS: u32 = Self::BITS;
+            const MASK: $primitive = Self::MASK;
+            const MIN: Self = Self::MIN;
+            const MAX: Self = Self::MAX;
+            const ZERO: Self = Self::ZERO;
+            const ONE: Self = Self::ONE;
+
+            #[inline(always)]
+            fn new(value: $primitive) -> Option<Self> {
+                Self::new(value)
+            }
+
+            #[inline(always)]
+            fn new_masked(value: $primitive) -> Self {
+                Self::new_masked(value)
+            }
+
+            #[inline(always)]
+            unsafe fn new_unchecked(value: $primitive) -> Self {
+                Self::new_unchecked(value)
+            }
+
+            #[inline(always)]
+            fn is_in_range(value: $primitive) -> bool {
+                Self::is_in_range(value)
+            }
+        }
+
+        impl Zero for $self {
+            #[inline(always)]
+            fn zero() -> Self {
+                Self::ZERO
+            }
+
+            #[inline(always)]
+            fn is_zero(&self) -> bool {
+                *self == Self::ZERO
+            }
+        }
+
+        impl One for $self {
+            #[inline(always)]
+            fn one() -> Self {
+                Self::ONE
+            }
+
+            #[inline(always)]
+            fn is_one(&self) -> bool {
+                *self == Self::ONE
+            }
+        }
+
+        impl FromStr for $self {
+            type Err = ParseBitintError;
+
+            fn from_str(s: &str) -> Result<Self, ParseBitintError> {
+                Self::new($primitive::from_str(s)?)
+                    .ok_or_else(|| RangeError(()).into())
+            }
+        }
+
+        impl Num for $self {
+            type FromStrRadixErr = ParseBitintError;
+
+            fn from_str_radix(
+                str: &str,
+                radix: u32
+            ) -> Result<Self, ParseBitintError> {
+                Self::new($primitive::from_str_radix(str, radix)?)
+                    .ok_or_else(|| RangeError(()).into())
+            }
+        }
+
+        impl Display for $self {
+            fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+                write!(f, "{}", self.to_primitive())
+            }
+        }
+
+        impl From<$self> for $primitive {
+            #[inline(always)]
+            fn from(value: $self) -> Self {
+                value.to_primitive()
+            }
+        }
+
+        impl PartialEq for $self {
+            #[inline(always)]
+            fn eq(&self, other: &Self) -> bool {
+                self.to_primitive() == other.to_primitive()
+            }
+        }
+
+        impl PartialOrd for $self {
+            #[inline(always)]
+            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+                self.to_primitive().partial_cmp(&other.to_primitive())
+            }
+        }
+
+        impl Ord for $self {
+            #[inline(always)]
+            fn cmp(&self, other: &Self) -> Ordering {
+                self.to_primitive().cmp(&other.to_primitive())
+            }
+        }
+
+        impl Not for $self {
+            type Output = Self;
+
+            #[inline(always)]
+            fn not(self) -> Self {
+                self ^ Self::MAX
+            }
+        }
+
+        define_ubitint_type!(@impl_from $self $primitive $flag);
+        define_ubitint_type!(@impl_op $self $primitive Add::add);
+        define_ubitint_type!(@impl_op $self $primitive Div::div);
+        define_ubitint_type!(@impl_op $self $primitive Mul::mul);
+        define_ubitint_type!(@impl_op $self $primitive Rem::rem);
+        define_ubitint_type!(@impl_op $self $primitive Sub::sub);
+        define_ubitint_type!(@impl_bit_op $self $primitive BitAnd::bitand);
+        define_ubitint_type!(@impl_bit_op $self $primitive BitOr::bitor);
+        define_ubitint_type!(@impl_bit_op $self $primitive BitXor::bitxor);
+        define_ubitint_type!(@impl_op_assign $self Add::add);
+        define_ubitint_type!(@impl_op_assign $self Div::div);
+        define_ubitint_type!(@impl_op_assign $self Mul::mul);
+        define_ubitint_type!(@impl_op_assign $self Rem::rem);
+        define_ubitint_type!(@impl_op_assign $self Sub::sub);
+        define_ubitint_type!(@impl_op_assign $self BitAnd::bitand);
+        define_ubitint_type!(@impl_op_assign $self BitOr::bitor);
+        define_ubitint_type!(@impl_op_assign $self BitXor::bitxor);
+        define_ubitint_type!(@impl_num_trait $self CheckedAdd::checked_add Option<Self>);
+        define_ubitint_type!(@impl_num_trait $self CheckedSub::checked_sub Option<Self>);
+        define_ubitint_type!(@impl_num_trait $self CheckedMul::checked_mul Option<Self>);
+        define_ubitint_type!(@impl_num_trait $self CheckedDiv::checked_div Option<Self>);
+        define_ubitint_type!(@impl_num_trait $self CheckedRem::checked_rem Option<Self>);
+        define_ubitint_type!(@impl_num_trait $self WrappingAdd::wrapping_add Self);
+        define_ubitint_type!(@impl_num_trait $self WrappingSub::wrapping_sub Self);
+        define_ubitint_type!(@impl_num_trait $self WrappingMul::wrapping_mul Self);
     };
     (@type_doc $bits:literal $primitive:ident upper_bits_clear) => {
         concat!(
@@ -361,153 +323,130 @@ macro_rules! define_ubitint_type {
             "This type is `#[repr(transparent)]` to [`", stringify!($primitive), "`].",
         )
     };
-    (@impl_from $self:ident $primitive:ident any_bit_pattern) => {
-        paste! {
-            impl PrimitiveSizedBitint for $self {
-                #[inline(always)]
-                fn from_primitive(value: $primitive) -> Self {
-                    Self(value)
-                }
+    (@from_primitive $primitive:ident any_bit_pattern) => {
+        /// Creates a `bitint` from a primitive value.
+        ///
+        /// This method is only provided for the `bitint` types that do not
+        /// impose additional invariants: [`U8`], [`U16`], [`U32`], [`U64`], and
+        /// [`U128`].
+        #[inline(always)]
+        #[must_use]
+        pub const fn from_primitive(value: $primitive) -> Self {
+            Self(value)
+        }
+    };
+    (@from_primitive $primitive:ident upper_bits_clear) => {};
+    (@checked_op_method $method:ident $desc:literal $op:literal $none_case:literal) => {
+        #[doc = concat!(
+            "Checked integer ", $desc, ". Computes `self ", $op, " rhs`, returning `None` if ",
+            $none_case, ".",
+        )]
+        #[inline(always)]
+        #[must_use]
+        pub const fn $method(self, rhs: Self) -> Option<Self> {
+            match self.to_primitive().$method(rhs.to_primitive()) {
+                Some(x) => Self::new(x),
+                None => None,
             }
-
-            impl From<$primitive> for $self {
-                #[inline(always)]
-                fn from(value: $primitive) -> Self {
-                    Self::from_primitive(value)
-                }
+        }
+    };
+    (@wrapping_op_method $method:ident $desc:literal $op:literal) => {
+        #[doc = concat!(
+            "Wrapping (modular) ", $desc, ". Computes `self ", $op, " rhs`, wrapping around at ",
+            "the boundary of the type.",
+        )]
+        #[inline(always)]
+        #[must_use]
+        pub const fn $method(self, rhs: Self) -> Self {
+            Self::new_masked(self.to_primitive().$method(rhs.to_primitive()))
+        }
+    };
+    (@unchecked_op_method $method:ident $desc:literal $op:literal) => {
+        #[cfg(feature = "unchecked_math")]
+        #[cfg_attr(feature = "_nightly", doc(cfg(unchecked_math)))]
+        #[doc = concat!(
+            "Unchecked integer ", $desc, ". Computes `self ", $op, " rhs`, assuming overflow ",
+            "cannot occur.",
+            "\n\n",
+            "# Safety",
+            "\n\n",
+            "The result must be in range for this type, as determined by ",
+            "[`is_in_range`](Self::is_in_range).",
+        )]
+        #[inline(always)]
+        pub const unsafe fn $method(self, rhs: Self) -> Self {
+            Self::new_unchecked(self.to_primitive().$method(rhs.to_primitive()))
+        }
+    };
+    (@impl_from $self:ident $primitive:ident any_bit_pattern) => {
+        impl From<$primitive> for $self {
+            #[inline(always)]
+            fn from(value: $primitive) -> Self {
+                Self(value)
             }
         }
     };
     (@impl_from $self:ident $primitive:ident upper_bits_clear) => {
-        paste! {
-            impl TryFrom<$primitive> for $self {
-                type Error = RangeError;
+        impl TryFrom<$primitive> for $self {
+            type Error = RangeError;
 
-                #[inline(always)]
-                fn try_from(value: $primitive) -> Result<Self, RangeError> {
-                    Self::new(value).ok_or(RangeError(()))
-                }
+            #[inline(always)]
+            fn try_from(value: $primitive) -> Result<Self, RangeError> {
+                Self::new(value).ok_or(RangeError(()))
             }
         }
     };
-    (@impl_op $self:ident $primitive:ident $trait:ident::$method:ident $op:tt $($ext:tt)?) => {
-        paste! {
-            impl $trait<$primitive> for $self {
-                type Output = Self;
+    (@impl_op $self:ident $primitive:ident $trait:ident::$method:ident) => {
+        impl $trait for $self {
+            type Output = Self;
 
-                #[inline(always)]
-                fn $method(self, rhs: $primitive) -> Self {
-                    let result = self.to_primitive() $op rhs;
-                    // Perform a sentinel operation with overflow behavior that
-                    // depends on the build configuration:
-                    // - With overflow-checks enabled, this panics on overflow.
-                    //   Even though the result is unused, optimizer should
-                    //   retain its side effects.
-                    // - With overflow-checks disabled, this wraps on overflow.
-                    //   The result is unused and there are no side effects, so
-                    //   it is likely to be optimized out entirely.
-                    let _ = result + ($primitive::MAX - Self::MAX.0);
-                    // We must either wrap or panic here. The unchecked
-                    // constructor is unsafe so calling it would be unsound.
-                    Self::new_masked(result)
-                }
-            }
-
-            impl $trait for $self {
-                type Output = Self;
-
-                #[inline(always)]
-                fn $method(self, rhs: Self) -> Self {
-                    self $op rhs.to_primitive()
-                }
-            }
-
-            define_ubitint_type!(@impl_checked_op $self $primitive $trait::$method);
-            define_ubitint_type!(@impl_wrapping_op $self $primitive $trait::$method $($ext)?);
-            define_ubitint_type!(@impl_unchecked_op $self $primitive $trait::$method $($ext)?);
-        }
-    };
-    (@impl_checked_op $self:ident $primitive:ident $trait:ident::$method:ident) => {
-        paste! {
-            impl [<Checked $trait>]<$primitive> for $self {
-                #[inline(always)]
-                fn [<checked_ $method>](self, rhs: $primitive) -> Option<Self> {
-                    self.to_primitive().[<checked_ $method>](rhs).and_then(Self::new)
-                }
-            }
-
-            impl [<Checked $trait>] for $self {
-                #[inline(always)]
-                fn [<checked_ $method>](self, rhs: Self) -> Option<Self> {
-                    self.[<checked_ $method>](rhs.to_primitive())
-                }
-            }
-
-            impl num_traits::[<Checked $trait>] for $self {
-                #[inline(always)]
-                fn [<checked_ $method>](&self, v: &Self) -> Option<Self> {
-                    [<Checked $trait>]::[<checked_ $method>](*self, *v)
-                }
+            #[inline(always)]
+            fn $method(self, rhs: Self) -> Self {
+                let result = $trait::$method(self.to_primitive(), rhs.to_primitive());
+                // Perform a sentinel operation with overflow behavior that
+                // depends on the build configuration:
+                // - With overflow-checks enabled, this panics on overflow. Even
+                //   though the result is unused, the optimizer should retain
+                //   its side effects.
+                // - With overflow-checks disabled, this wraps on overflow. The
+                //   result is unused and there are no side effects, so it is
+                //   likely to be optimized out entirely.
+                let _ = result + ($primitive::MAX - Self::MAX.to_primitive());
+                // We must either wrap or panic here. The unchecked constructor
+                // is unsafe so calling it would be unsound.
+                Self::new_masked(result)
             }
         }
     };
-    (@impl_wrapping_op $self:ident $primitive:ident $trait:ident::$method:ident) => {};
-    (@impl_wrapping_op $self:ident $primitive:ident $trait:ident::$method:ident ext) => {
-        paste! {
-            impl [<Wrapping $trait>]<$primitive> for $self {
-                #[inline(always)]
-                fn [<wrapping_ $method>](self, rhs: $primitive) -> Self {
-                    Self::new_masked(self.to_primitive().[<wrapping_ $method>](rhs))
-                }
-            }
+    (@impl_bit_op $self:ident $primitive:ident $trait:ident::$method:ident) => {
+        impl $trait for $self {
+            type Output = Self;
 
-            impl [<Wrapping $trait>] for $self {
-                #[inline(always)]
-                fn [<wrapping_ $method>](self, rhs: Self) -> Self {
-                    self.[<wrapping_ $method>](rhs.to_primitive())
-                }
-            }
+            #[inline(always)]
+            fn $method(self, rhs: Self) -> Self {
+                let result = $trait::$method(self.to_primitive(), rhs.to_primitive());
 
-            impl num_traits::[<Wrapping $trait>] for $self {
-                #[inline(always)]
-                fn [<wrapping_ $method>](&self, v: &Self) -> Self {
-                    [<Wrapping $trait>]::[<wrapping_ $method>](*self, *v)
-                }
+                // SAFETY: The unused upper bits are clear in both operands, so
+                // they will be clear in the result. This holds for BitAnd,
+                // BitOr, and BitXor.
+                unsafe { Self::new_unchecked(result) }
             }
         }
     };
-    (@impl_unchecked_op $self:ident $primitive:ident $trait:ident::$method:ident) => {};
-    (@impl_unchecked_op $self:ident $primitive:ident $trait:ident::$method:ident ext) => {
-        paste! {
-            #[cfg(feature = "unchecked_math")]
-            #[cfg_attr(feature = "_nightly", doc(cfg(unchecked_math)))]
-            impl [<Unchecked $trait>]<$primitive> for $self {
-                type Output = Self;
-
-                #[inline(always)]
-                unsafe fn [<unchecked_ $method>](self, rhs: $primitive) -> Self {
-                    Self::new_unchecked(self.to_primitive().[<unchecked_ $method>](rhs))
-                }
-            }
-
-            #[cfg(feature = "unchecked_math")]
-            #[cfg_attr(feature = "_nightly", doc(cfg(unchecked_math)))]
-            impl [<Unchecked $trait>] for $self {
-                type Output = Self;
-
-                #[inline(always)]
-                unsafe fn [<unchecked_ $method>](self, rhs: Self) -> Self {
-                    self.[<unchecked_ $method>](rhs.to_primitive())
-                }
+    (@impl_num_trait $self:ident $trait:ident::$method:ident $return:ty) => {
+        impl num_traits::$trait for $self {
+            #[inline(always)]
+            fn $method(&self, v: &Self) -> $return {
+                (*self).$method(*v)
             }
         }
     };
-    (@impl_op_assign $self:ident $trait:ident::<$rhs:ident>::$method:ident $op:tt) => {
+    (@impl_op_assign $self:ident $trait:ident::$method:ident) => {
         paste! {
-            impl [<$trait Assign>]<$rhs> for $self {
+            impl [<$trait Assign>] for $self {
                 #[inline(always)]
-                fn [<$method _assign>](&mut self, rhs: $rhs) {
-                    *self = *self $op rhs;
+                fn [<$method _assign>](&mut self, rhs: Self) {
+                    *self = $trait::$method(*self, rhs);
                 }
             }
         }
