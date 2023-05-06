@@ -17,20 +17,21 @@ pub trait UBitint:
     + Hash
     + Eq
     + Ord
-    + BitAnd
+    + BitAnd<Output = Self>
     + BitAndAssign
-    + BitOr
+    + BitOr<Output = Self>
     + BitOrAssign
-    + BitXor
+    + BitXor<Output = Self>
     + BitXorAssign
     + TryFrom<Self::Primitive>
+    + Into<Self::Primitive>
     + Num
     + NumAssignOps
     + Sized
     + Sealed
 {
     /// The primitive type that this type wraps.
-    type Primitive: From<Self>;
+    type Primitive: From<Self> + TryInto<Self>;
 
     /// The bit width of this type.
     const BITS: u32;
