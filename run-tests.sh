@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e -x
 
 cargo +stable test --target-dir=target-stable \
     -p bitint \
@@ -24,3 +24,7 @@ cargo +nightly test --target-dir=target-nightly \
     -p bitint-test-unchecked
 
 cargo +nightly doc --target-dir=target-nightly --all-features -p bitint --no-deps
+
+cargo +nightly miri test --target-dir=target-nightly \
+    --features unchecked_math \
+    -p bitint

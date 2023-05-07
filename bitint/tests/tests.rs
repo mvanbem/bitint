@@ -60,6 +60,7 @@ mod hostile_environment {
 }
 
 #[test]
+#[cfg_attr(not(feature = "_trybuild_tests"), ignore)]
 fn trybuild_tests() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests_error/*.rs");

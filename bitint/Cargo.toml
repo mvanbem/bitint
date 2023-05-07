@@ -15,6 +15,7 @@ features = ["unchecked_math", "_nightly"]
 [features]
 unchecked_math = []
 _nightly = []
+_trybuild_tests = []
 
 [dependencies]
 assume = { workspace = true }
