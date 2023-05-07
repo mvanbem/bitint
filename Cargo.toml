@@ -6,6 +6,26 @@ members = [
     "bitint-test-unchecked",
 ]
 
+[workspace.package]
+version = "0.1.0"
+authors = ["Michael VanBemmel <mvanbem@mvanbem.net>"]
+edition = "2021"
+repository = "https://github.com/mvanbem/bitint"
+license = "MIT"
+
+[workspace.dependencies]
+assume = "0.5"
+bitint = { path = "bitint" }
+bitint-macros = { path = "bitint-macros" }
+litrs = "0.4"
+num-traits = { version = "0.2", default-features = false }
+paste = "1"
+proc-macro2 = "1"
+quote = "1"
+seq-macro = "0.3"
+syn = { version = "2", features = ["extra-traits", "full"] }
+trybuild = "1"
+
 [profile.test-unchecked]
 inherits = "test"
 overflow-checks = false
