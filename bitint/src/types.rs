@@ -2,6 +2,7 @@
 
 use core::cmp::Ordering;
 use core::fmt::{self, Display, Formatter};
+use core::hash::{Hash, Hasher};
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign,
     Mul, MulAssign, Not, Rem, RemAssign, Sub, SubAssign,
@@ -25,7 +26,7 @@ macro_rules! define_ubitint_type {
         }
     };
     (@define $self:ident $primitive:ident $bits:literal $flag:tt) => {
-        #[derive(Clone, Copy, Debug, Eq, Hash)]
+        #[derive(Clone, Copy, Debug)]
         #[doc = define_ubitint_type!(@type_doc $bits $primitive $flag)]
         #[repr(transparent)]
         pub struct $self($primitive);
@@ -132,6 +133,7 @@ macro_rules! define_ubitint_type {
             ///   Self::MIN.as_primitive() && value <= Self::MAX.as_primitive()`
             ///
             /// This method is a `const` variant of [`UBitint::is_in_range`].
+            #[allow(clippy::bad_bit_mask)] // For primitive widths.
             #[inline(always)]
             #[must_use]
             pub const fn is_in_range(value: $primitive) -> bool {
@@ -246,6 +248,14 @@ macro_rules! define_ubitint_type {
             #[inline(always)]
             fn eq(&self, other: &Self) -> bool {
                 self.to_primitive() == other.to_primitive()
+            }
+        }
+
+        impl Eq for $self {}
+
+        impl Hash for $self {
+            fn hash<H: Hasher>(&self, state: &mut H) {
+                self.to_primitive().hash(state);
             }
         }
 

@@ -98,7 +98,7 @@ fn parse_suffix(suffix: &str) -> Option<u8> {
         return None;
     }
     let width: u8 = suffix[1..].parse().ok()?;
-    if width < 1 || width > 128 {
+    if !(1..=128).contains(&width) {
         return None;
     }
     Some(width)
@@ -110,8 +110,7 @@ fn map_token_stream_literals(
 ) -> TokenStream {
     stream
         .into_iter()
-        .map(|tt| map_token_tree_literals(tt, f))
-        .flatten()
+        .flat_map(|tt| map_token_tree_literals(tt, f))
         .collect()
 }
 
