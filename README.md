@@ -1,5 +1,16 @@
 # bitint
 
+[![crates.io][crates-badge]][crates-url]
+[![docs.rs][docs-badge]][docs-url]
+[![CI Status][ci-badge]][ci-url]
+
+[crates-badge]: https://img.shields.io/crates/v/bitint
+[crates-url]: https://crates.io/crates/bitint
+[docs-badge]: https://img.shields.io/docsrs/bitint
+[docs-url]: https://docs.rs/bitint
+[ci-badge]: https://img.shields.io/github/actions/workflow/status/mvanbem/bitint/ci.yml?branch=main&label=CI&logo=github
+[ci-url]: https://github.com/mvanbem/bitint/actions?query=workflow%3ACI+branch%3Amain
+
 A bit-integer library for Rust. `bitint`s are like primitive integer types, but
 their logical width is measured in bits.
 
