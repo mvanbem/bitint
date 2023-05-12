@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - main
-      - bitint-*
+      - 'bitint-*'
   pull_request:
     branches:
       - main
-      - bitint-*
+      - 'bitint-*'
+  schedule:
+  - cron: '0 16 * * 0'
 
 env:
   CARGO_TERM_COLOR: always
