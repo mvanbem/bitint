@@ -12,102 +12,45 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  fmt:
-    name: Check formatting
+  stable:
+    name: Stable Toolchain
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Rust stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Run rustfmt
-        run: cargo fmt --check
-
-  clippy-stable:
-    name: Clippy (Stable)
-    runs-on: ubuntu-latest
-    needs: fmt
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust stable toolchain
+      - name: Prepare Rust stable toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: clippy
-      - name: Run Clippy
+      - name: Check formatting
+        run: cargo +stable fmt --check
+      - name: Check Clippy lints
         run: cargo +stable clippy --test clippy -- --deny warnings
-
-  clippy-nightly:
-    name: Clippy (Nightly)
-    runs-on: ubuntu-latest
-    needs: fmt
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust nightly toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: nightly
-          components: clippy
-      - name: Run Clippy
-        run: cargo +nightly clippy --all-features --test clippy -- --deny warnings
-
-  test-stable:
-    name: Test (Stable)
-    runs-on: ubuntu-latest
-    needs: clippy-stable
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Run Checked Tests
+      - name: Run tests with overflow checks
         run: cargo +stable test -p bitint -p bitint-macros -p bitint-test-checked
-      - name: Run Unchecked Tests
+      - name: Run tests without overflow checks
         run: cargo +stable test --profile test-unchecked -p bitint-test-unchecked
-
-  test-nightly:
-    name: Test (Nightly)
-    runs-on: ubuntu-latest
-    needs: clippy-nightly
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust nightly toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: nightly
-      - name: Run Checked Tests
-        run: cargo +nightly test --all-features -p bitint -p bitint-macros -p bitint-test-checked
-      - name: Run Unchecked Tests
-        run: cargo +nightly test --all-features --profile test-unchecked -p bitint-test-unchecked
-
-  miri-nightly:
-    name: Run Miri tests (Nightly-only)
-    needs: test-nightly
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust nightly toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Run Miri tests
-        run: cargo +nightly miri test --features unchecked_math -p bitint
-
-  doc-stable:
-    name: Doc (Stable)
-    runs-on: ubuntu-latest
-    needs: test-stable
-    steps:
-      - uses: actions/checkout@v3
-      - name: Rust stable toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Build docs
         run: cargo +stable doc -p bitint --no-deps
 
-  doc-nightly:
-    name: Doc (Nightly)
+  nightly:
+    name: Nightly Toolchain
     runs-on: ubuntu-latest
-    needs: test-nightly
     steps:
       - uses: actions/checkout@v3
-      - name: Rust nightly toolchain
+      - name: Prepare Rust nightly toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly
+          components: clippy, miri
+      - name: Check formatting
+        run: cargo +nightly fmt --check
+      - name: Check Clippy lints
+        run: cargo +nightly clippy --all-features --test clippy -- --deny warnings
+      - name: Run tests with overflow checks
+        run: cargo +nightly test --all-features -p bitint -p bitint-macros -p bitint-test-checked
+      - name: Run tests without overflow checks
+        run: cargo +nightly test --all-features --profile test-unchecked -p bitint-test-unchecked
+      - name: Run Miri tests
+        run: cargo +nightly miri test --features unchecked_math -p bitint
       - name: Build docs
         run: cargo +nightly doc --all-features -p bitint --no-deps
