@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'bitint-*']
+  pull_request:
+    branches: [main, 'bitint-*']
+  schedule:
+    - cron: '0 16 * * 0'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  stable:
+    name: Stable Toolchain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Prepare Rust stable toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+      - name: Check formatting
+        run: cargo +stable fmt --check
+      - name: Check Clippy lints
+        run: cargo +stable clippy -- --deny warnings
+      - name: Run tests with overflow checks
+        run: cargo +stable test -p bitint -p bitint-macros -p bitint-test-checked
+      - name: Run tests without overflow checks
+        run: cargo +stable test --profile test-unchecked -p bitint-test-unchecked
+      - name: Build docs
+        run: cargo +stable doc -p bitint --no-deps
+
+  nightly:
+    name: Nightly Toolchain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Prepare Rust nightly toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+          components: clippy, miri, rust-src, rustfmt
+      - name: Check formatting
+        run: cargo +nightly fmt --check
+      - name: Check Clippy lints
+        run: cargo +nightly clippy --all-features -- --deny warnings
+      - name: Run tests with overflow checks
+        run: cargo +nightly test --all-features -p bitint -p bitint-macros -p bitint-test-checked
+      - name: Run tests without overflow checks
+        run: cargo +nightly test --all-features --profile test-unchecked -p bitint-test-unchecked
+      - name: Run Miri tests
+        run: cargo +nightly miri test --features unchecked_math -p bitint
+      - name: Build docs
+        run: cargo +nightly doc --all-features -p bitint --no-deps
