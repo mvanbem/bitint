@@ -1,5 +1,11 @@
 # bitint
 
+crates.io shield
+
+docs.rs shield
+
+test shield (needs actions!)
+
 A bit-integer library for Rust. `bitint`s are like primitive integer types, but
 their logical width is measured in bits.
 
