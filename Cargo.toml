@@ -15,8 +15,8 @@ license = "MIT"
 
 [workspace.dependencies]
 assume = "0.5"
-bitint = { path = "bitint" }
-bitint-macros = { path = "bitint-macros" }
+bitint = { path = "bitint", version = "0.1" }
+bitint-macros = { path = "bitint-macros", version = "0.1" }
 litrs = "0.4"
 num-traits = { version = "0.2", default-features = false }
 paste = "1"
