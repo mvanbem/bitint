@@ -262,7 +262,31 @@ macro_rules! define_ubitint_type {
         impl PartialOrd for $self {
             #[inline(always)]
             fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-                self.to_primitive().partial_cmp(&other.to_primitive())
+                Some(self.cmp(other))
+            }
+
+            // As of Rust 1.71, leveraging the default function impls can result
+            // in poor codegen. (Rather than compare the primitive, it computes
+            // the Ordering discriminant and compares with that instead.)
+
+            #[inline(always)]
+            fn lt(&self, other: &Self) -> bool {
+                self.to_primitive() < other.to_primitive()
+            }
+
+            #[inline(always)]
+            fn le(&self, other: &Self) -> bool {
+                self.to_primitive() <= other.to_primitive()
+            }
+
+            #[inline(always)]
+            fn gt(&self, other: &Self) -> bool {
+                self.to_primitive() > other.to_primitive()
+            }
+
+            #[inline(always)]
+            fn ge(&self, other: &Self) -> bool {
+                self.to_primitive() >= other.to_primitive()
             }
         }
 
