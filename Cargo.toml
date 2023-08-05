@@ -7,7 +7,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Michael VanBemmel <mvanbem@mvanbem.net>"]
 edition = "2021"
 repository = "https://github.com/mvanbem/bitint"
@@ -15,8 +15,8 @@ license = "MIT"
 
 [workspace.dependencies]
 assume = "0.5"
-bitint = { path = "bitint", version = "0.1" }
-bitint-macros = { path = "bitint-macros", version = "0.1" }
+bitint = { path = "bitint", version = "0.1.1" }
+bitint-macros = { path = "bitint-macros", version = "0.1.1" }
 litrs = "0.4"
 num-traits = { version = "0.2", default-features = false }
 paste = "1"
