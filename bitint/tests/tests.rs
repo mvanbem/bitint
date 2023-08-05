@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use bitint::prelude::*;
 
 #[bitint_literals]
@@ -14,6 +16,19 @@ fn test_display() {
     assert_eq!(format!("{}", 1_U1), "1");
     assert_eq!(format!("{}", 1234_U12), "1234");
     assert_eq!(format!("{}", 65535_U16), "65535");
+}
+
+#[bitint_literals]
+#[test]
+fn test_bit_cmp() {
+    assert_eq!(0b0100_U4.cmp(&0b0101_U4), Ordering::Less);
+    assert_eq!(0b1011_U4.cmp(&0b1011_U4), Ordering::Equal);
+    assert_eq!(0b1111_U4.cmp(&0b1110_U4), Ordering::Greater);
+    assert!(0b0010100_U7 <  0b1010100_U7);
+    assert!(0b0010111_U7 <= 0b0010111_U7);
+    assert!(0b1111111_U7 == 0b1111111_U7);
+    assert!(0b1011101_U7 >= 0b1011101_U7);
+    assert!(0b1010001_U7 >  0b1010000_U7);
 }
 
 #[bitint_literals]
